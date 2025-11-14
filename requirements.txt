@@ -1,0 +1,4 @@
+flask==3.1.2
+python-dateutil==2.9.0.post0
+peewee==3.18.2
+requests==2.32.3
