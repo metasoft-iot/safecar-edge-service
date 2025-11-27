@@ -52,15 +52,14 @@ class DeviceRepository:
     
     @staticmethod
     def get_or_create_test_device() -> DeviceEntity:
-        """
-        Get or create a test device for development/testing purposes.
-        
+        """Get or create a test device for development/testing purposes.
+
         Returns:
             DeviceEntity: Test device entity
         """
         from datetime import datetime, timezone
         device_model, _ = DeviceModel.get_or_create(
-            device_id="edge-device-001",
+            device_id="safecar-001",
             defaults={
                 "api_key": "test-api-key-12345",
                 "created_at": datetime.now(timezone.utc)

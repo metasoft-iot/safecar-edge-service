@@ -1,13 +1,16 @@
-"""
-SafeCar Edge Service - Main Application
+"""SafeCar Edge Service - Main Application.
 
-This edge service processes IoT sensor data from vehicles and sends telemetry
-to the SafeCar backend platform for analysis and alerting.
+This edge service processes IoT sensor data from two ESP32 devices and sends
+telemetry to the SafeCar backend platform for analysis and alerting.
 
-Sensors integrated:
-- LM35: Temperature sensor (cabin/engine temperature monitoring)
-- MQ2: Gas sensor (detecting GLP, butane, propane, methane, alcohol, hydrogen)
-- ACS712-05: Current sensor (electrical system monitoring)
+ESP32 (CABINA) - Located in car cabin:
+- DHT11: Temperature and humidity monitoring
+- MQ2: Gas detection (GLP, butane, propane, methane, alcohol, hydrogen)
+- NEO6M: GPS module with EEPROM and reception antenna
+
+ESP32 (MOTOR) - Located in engine compartment:
+- DHT11: Temperature and humidity monitoring
+- ACS712-05: Current sensor (Hall effect, 0-5 Amperes)
 """
 from flask import Flask
 

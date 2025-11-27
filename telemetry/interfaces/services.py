@@ -1,4 +1,4 @@
-"""REST API controllers for Telemetry context"""
+"""REST API controllers for Telemetry context."""
 from flask import Blueprint, request, jsonify
 from telemetry.application.services import TelemetryApplicationService
 
@@ -7,22 +7,36 @@ telemetry_api = Blueprint('telemetry_api', __name__, url_prefix='/api/v1/telemet
 
 @telemetry_api.route('/samples', methods=['POST'])
 def create_sensor_reading():
-    """
-    Create a new sensor reading from IoT device.
-    
+    """Create a new sensor reading from IoT device (ESP32 CABINA or MOTOR).
+
     Headers:
         X-Device-Id: Device identifier
         X-API-Key: Device API key
-    
-    Request body:
+
+    Request body (all fields optional except timestamp):
     {
-        "temperature_celsius": 85.5,
+        "sensor_location": "CABINA" | "MOTOR",
+        "cabin_temperature_celsius": 25.5,
+        "cabin_humidity_percent": 65.0,
+        "engine_temperature_celsius": 95.0,
+        "engine_humidity_percent": 45.0,
         "gas_type": "methane",
         "gas_concentration_ppm": 450.0,
+        "latitude": -12.0464,
+        "longitude": -77.0428,
         "current_amperes": 2.3,
-        "timestamp": "2025-11-13T10:30:00Z"
+        "timestamp": "2025-11-26T18:30:00Z"
     }
-    
+
+    ESP32 (CABINA) sensors:
+    - DHT11: cabin_temperature_celsius, cabin_humidity_percent
+    - MQ2: gas_type, gas_concentration_ppm
+    - NEO6M GPS: latitude, longitude
+
+    ESP32 (MOTOR) sensors:
+    - DHT11: engine_temperature_celsius, engine_humidity_percent
+    - ACS712: current_amperes
+
     Returns:
         201: Sensor reading created successfully
         400: Invalid request data
@@ -31,34 +45,40 @@ def create_sensor_reading():
     # Get authentication headers
     device_id = request.headers.get('X-Device-Id')
     api_key = request.headers.get('X-API-Key')
-    
+
     if not device_id or not api_key:
         return jsonify({
             'error': 'Missing authentication headers: X-Device-Id and X-API-Key required'
         }), 401
-    
+
     # Get request data
     data = request.get_json()
     if not data:
         return jsonify({'error': 'Request body is required'}), 400
-    
+
     try:
         telemetry_service = TelemetryApplicationService()
         result = telemetry_service.record_sensor_reading(
             device_id=device_id,
             api_key=api_key,
-            temperature_celsius=data.get('temperature_celsius'),
+            sensor_location=data.get('sensor_location'),
+            cabin_temperature_celsius=data.get('cabin_temperature_celsius'),
+            cabin_humidity_percent=data.get('cabin_humidity_percent'),
+            engine_temperature_celsius=data.get('engine_temperature_celsius'),
+            engine_humidity_percent=data.get('engine_humidity_percent'),
             gas_type=data.get('gas_type'),
             gas_concentration_ppm=data.get('gas_concentration_ppm'),
+            latitude=data.get('latitude'),
+            longitude=data.get('longitude'),
             current_amperes=data.get('current_amperes'),
             timestamp=data.get('timestamp')
         )
-        
+
         return jsonify({
             'message': 'Sensor reading recorded successfully',
             'data': result
         }), 201
-    
+
     except ValueError as e:
         return jsonify({'error': str(e)}), 400
     except Exception as e:
@@ -67,9 +87,8 @@ def create_sensor_reading():
 
 @telemetry_api.route('/readings/<int:reading_id>', methods=['GET'])
 def get_reading(reading_id):
-    """
-    Get a sensor reading by ID.
-    
+    """Get a sensor reading by ID.
+
     Returns:
         200: Sensor reading found
         404: Reading not found
@@ -77,28 +96,27 @@ def get_reading(reading_id):
     try:
         telemetry_service = TelemetryApplicationService()
         reading = telemetry_service.get_reading_by_id(reading_id)
-        
+
         if not reading:
             return jsonify({'error': 'Reading not found'}), 404
-        
+
         return jsonify({
             'data': reading
         }), 200
-    
+
     except Exception as e:
         return jsonify({'error': f'Internal error: {str(e)}'}), 500
 
 
 @telemetry_api.route('/vehicles/<int:vehicle_id>/readings', methods=['GET'])
 def get_vehicle_readings(vehicle_id):
-    """
-    Get sensor readings for a vehicle.
-    
+    """Get sensor readings for a vehicle.
+
     Query parameters:
         start_date: Start date (ISO format, optional)
         end_date: End date (ISO format, optional)
         limit: Maximum number of results (default: 100)
-    
+
     Returns:
         200: List of sensor readings
     """
@@ -106,7 +124,7 @@ def get_vehicle_readings(vehicle_id):
         start_date = request.args.get('start_date')
         end_date = request.args.get('end_date')
         limit = int(request.args.get('limit', 100))
-        
+
         telemetry_service = TelemetryApplicationService()
         readings = telemetry_service.get_vehicle_readings(
             vehicle_id=vehicle_id,
@@ -114,46 +132,45 @@ def get_vehicle_readings(vehicle_id):
             end_date=end_date,
             limit=limit
         )
-        
+
         return jsonify({
             'vehicle_id': vehicle_id,
             'count': len(readings),
             'data': readings
         }), 200
-    
+
     except Exception as e:
         return jsonify({'error': f'Internal error: {str(e)}'}), 500
 
 
 @telemetry_api.route('/stats', methods=['GET'])
 def get_device_stats():
-    """
-    Get statistics for the authenticated device.
-    
+    """Get statistics for the authenticated device.
+
     Headers:
         X-Device-Id: Device identifier
         X-API-Key: Device API key
-    
+
     Returns:
-        200: Device statistics
+        200: Device statistics with separate stats for cabin and engine sensors
         401: Unauthorized
     """
     device_id = request.headers.get('X-Device-Id')
     api_key = request.headers.get('X-API-Key')
-    
+
     if not device_id or not api_key:
         return jsonify({
             'error': 'Missing authentication headers: X-Device-Id and X-API-Key required'
         }), 401
-    
+
     try:
         telemetry_service = TelemetryApplicationService()
         stats = telemetry_service.get_device_statistics(device_id, api_key)
-        
+
         return jsonify({
             'data': stats
         }), 200
-    
+
     except ValueError as e:
         return jsonify({'error': str(e)}), 401
     except Exception as e:
