@@ -182,7 +182,7 @@ python app.py
 │  └─────────────────────────────────────────────────────┘     │
 └──────────────────────────┬────────────────────────────────────┘
                            │ HTTP POST
-                           │ /api/v1/telemetry/samples
+                           │ /api/v1/telemetry/data-records
                            ▼
 ┌──────────────────────────────────────────────────────────────┐
 │                  DISPOSITIVOS IoT (ESP32)                     │
@@ -234,7 +234,7 @@ def setup():
    }
    ↓
 [ESP32] Envía POST a Edge Service:
-   URL: http://192.168.1.XX:5000/api/v1/telemetry/samples
+   URL: http://192.168.1.XX:5000/api/v1/telemetry/data-records
    Headers:
      - X-Device-Id: safecar-001
      - X-API-Key: test-api-key-12345
@@ -244,7 +244,7 @@ def setup():
 #### 3️⃣ **Procesamiento en Edge Service**
 
 ```
-[Edge] Recibe POST /api/v1/telemetry/samples
+[Edge] Recibe POST /api/v1/telemetry/data-records
    ↓
 [Edge IAM] Valida device_id y api_key
    ↓
@@ -378,7 +378,7 @@ const char* password = "TU_PASSWORD_WIFI";
 // Obtén la IP del Edge Service
 // Se muestra al iniciar: "Running on http://192.168.1.XX:5000"
 
-const char* edgeServiceURL = "http://192.168.1.XX:5000/api/v1/telemetry/samples";
+const char* edgeServiceURL = "http://192.168.1.XX:5000/api/v1/telemetry/data-records";
 ```
 
 #### Paso 4: Usar Credenciales del Dispositivo
@@ -442,7 +442,7 @@ curl http://localhost:5000/
 ### 3. Enviar dato de prueba manual
 
 ```bash
-curl -X POST http://localhost:5000/api/v1/telemetry/samples \
+curl -X POST http://localhost:5000/api/v1/telemetry/data-records \
   -H "Content-Type: application/json" \
   -H "X-Device-Id: safecar-001" \
   -H "X-API-Key: test-api-key-12345" \
@@ -509,7 +509,7 @@ GET /
 
 #### 2. Enviar muestra de telemetría - ESP32 (CABINA)
 ```bash
-POST /api/v1/telemetry/samples
+POST /api/v1/telemetry/data-records
 Content-Type: application/json
 X-Device-Id: safecar-001
 X-API-Key: test-api-key-12345
@@ -528,7 +528,7 @@ X-API-Key: test-api-key-12345
 
 #### 3. Enviar muestra de telemetría - ESP32 (MOTOR)
 ```bash
-POST /api/v1/telemetry/samples
+POST /api/v1/telemetry/data-records
 Content-Type: application/json
 X-Device-Id: safecar-001
 X-API-Key: test-api-key-12345

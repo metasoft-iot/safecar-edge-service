@@ -26,13 +26,14 @@ class SafeCarBackendService:
     ) -> bool:
         """Send a telemetry sample to the SafeCar backend.
 
-        Maps ESP32 sensor data to backend TelemetrySample structure:
-        - cabin_temperature_celsius → sample.cabinTemperature
-        - engine_temperature_celsius → sample.engineTemperature
-        - cabin_humidity_percent → sample.cabinHumidity
-        - latitude, longitude → sample.location (GeoPoint)
-        - gas_type, gas_concentration_ppm → sample.cabinGasLevel
-        - current_amperes → sample.electricalCurrent
+        Maps ESP32 sensor data to backend CreateTelemetryResource (FLAT structure):
+        - cabin_temperature_celsius → cabinTemperature (Double)
+        - engine_temperature_celsius → engineTemperature (Double)
+        - cabin_humidity_percent → cabinHumidity (Double)
+        - latitude, longitude → latitude, longitude (Double, Double)
+        - gas_type → cabinGasType (String enum: METHANE, PROPANE, etc.)
+        - gas_concentration_ppm → cabinGasConcentration (Double)
+        - current_amperes → electricalCurrent (Double)
 
         Args:
             reading: Sensor reading to send.
@@ -78,50 +79,55 @@ class SafeCarBackendService:
     ) -> Dict[str, Any]:
         """Build the telemetry payload compatible with SafeCar backend.
 
+        Backend expects a FLAT structure (CreateTelemetryResource):
+        {
+            "vehicleId": 1,
+            "driverId": 1,
+            "type": "CABIN_GAS_DETECTED",
+            "severity": "WARNING",
+            "timestamp": "2025-11-27T20:00:00Z",
+            "cabinTemperature": 25.5,
+            "cabinHumidity": 65.0,
+            "cabinGasType": "METHANE",
+            "cabinGasConcentration": 450.0,
+            "latitude": -12.0464,
+            "longitude": -77.0428,
+            "engineTemperature": 95.0,
+            "electricalCurrent": 2.5
+        }
+
         Args:
             reading: Sensor reading.
             telemetry_type: Telemetry type.
             severity: Alert severity.
 
         Returns:
-            Dict: Telemetry payload matching IngestTelemetrySampleCommand.
+            Dict: Flat telemetry payload matching CreateTelemetryResource.
         """
-        # Build the TelemetrySample structure
-        sample = {
+        # Build FLAT payload structure
+        payload = {
+            "vehicleId": reading.vehicle_id,
+            "driverId": reading.driver_id,
             "type": telemetry_type,
             "severity": severity,
-            "timestamp": {
-                "occurredAt": reading.timestamp.isoformat()
-            },
-            "vehicleId": {
-                "vehicleId": reading.vehicle_id
-            },
-            "driverId": {
-                "driverId": reading.driver_id
-            }
+            "timestamp": reading.timestamp.isoformat()
         }
 
-        # Map cabin temperature (DHT11 from CABINA)
+        # Add cabin temperature (DHT11 from CABINA) - flat field
         if reading.has_cabin_temperature_reading():
-            sample["cabinTemperature"] = {
-                "value": reading.cabin_temperature_celsius
-            }
+            payload["cabinTemperature"] = reading.cabin_temperature_celsius
 
-        # Map engine temperature (DHT11 from MOTOR)
+        # Add engine temperature (DHT11 from MOTOR) - flat field
         if reading.has_engine_temperature_reading():
-            sample["engineTemperature"] = {
-                "value": reading.engine_temperature_celsius
-            }
+            payload["engineTemperature"] = reading.engine_temperature_celsius
 
-        # Map cabin humidity (DHT11 from CABINA)
+        # Add cabin humidity (DHT11 from CABINA) - flat field
         if reading.has_cabin_humidity_reading():
-            sample["cabinHumidity"] = {
-                "value": reading.cabin_humidity_percent
-            }
+            payload["cabinHumidity"] = reading.cabin_humidity_percent
 
-        # Map gas detection (MQ2 from CABINA)
+        # Add gas detection (MQ2 from CABINA) - flat fields
         if reading.has_gas_reading():
-            # Map gas type to CabinGasType enum
+            # Map gas type to backend enum (uppercase)
             gas_type_mapping = {
                 'methane': 'METHANE',
                 'propane': 'PROPANE',
@@ -135,28 +141,17 @@ class SafeCarBackendService:
                 'OTHER'
             )
 
-            sample["cabinGasLevel"] = {
-                "type": backend_gas_type,
-                "concentrationPpm": reading.gas_concentration_ppm
-            }
+            payload["cabinGasType"] = backend_gas_type
+            payload["cabinGasConcentration"] = reading.gas_concentration_ppm
 
-        # Map GPS location (NEO6M from CABINA)
+        # Add GPS location (NEO6M from CABINA) - flat fields
         if reading.has_gps_reading():
-            sample["location"] = {
-                "latitude": reading.latitude,
-                "longitude": reading.longitude
-            }
+            payload["latitude"] = reading.latitude
+            payload["longitude"] = reading.longitude
 
-        # Map electrical current (ACS712 from MOTOR)
+        # Add electrical current (ACS712 from MOTOR) - flat field
         if reading.has_current_reading():
-            sample["electricalCurrent"] = {
-                "value": reading.current_amperes
-            }
-
-        # Wrap in IngestTelemetrySampleCommand structure
-        payload = {
-            "sample": sample
-        }
+            payload["electricalCurrent"] = reading.current_amperes
 
         return payload
 

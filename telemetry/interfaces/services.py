@@ -5,7 +5,7 @@ from telemetry.application.services import TelemetryApplicationService
 telemetry_api = Blueprint('telemetry_api', __name__, url_prefix='/api/v1/telemetry')
 
 
-@telemetry_api.route('/samples', methods=['POST'])
+@telemetry_api.route('/data-records', methods=['POST'])
 def create_sensor_reading():
     """Create a new sensor reading from IoT device (ESP32 CABINA or MOTOR).
 

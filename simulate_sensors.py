@@ -161,7 +161,7 @@ class SensorSimulator:
 
         try:
             response = requests.post(
-                f'{self.edge_service_url}/api/v1/telemetry/samples',
+                f'{self.edge_service_url}/api/v1/telemetry/data-records',
                 json=payload,
                 headers=headers,
                 timeout=5
@@ -212,7 +212,7 @@ class SensorSimulator:
 
         try:
             response = requests.post(
-                f'{self.edge_service_url}/api/v1/telemetry/samples',
+                f'{self.edge_service_url}/api/v1/telemetry/data-records',
                 json=payload,
                 headers=headers,
                 timeout=5
