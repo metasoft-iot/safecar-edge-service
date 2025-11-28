@@ -76,7 +76,6 @@ def test_motor_data():
     payload = {
         "sensor_location": "MOTOR",
         "engine_temperature_celsius": 98.5,  # High but not critical
-        "engine_humidity_percent": 42.0,
         "current_amperes": 4.3,  # High current (> 4.0A)
         "timestamp": datetime.now(timezone.utc).isoformat().replace('+00:00', 'Z')
     }
@@ -122,11 +121,15 @@ def verify_backend():
     print("\n=== Checking Backend ===")
     try:
         response = requests.get("http://localhost:8080/actuator/health", timeout=5)
-        if response.status_code == 200:
-            print("✓ Backend is running!")
+        # 200 = OK, 401 = Requires auth but backend is running
+        if response.status_code in [200, 401]:
+            if response.status_code == 401:
+                print("✓ Backend is running! (endpoint requires auth, but that's OK)")
+            else:
+                print("✓ Backend is running!")
             return True
         else:
-            print(f"✗ Backend returned status {response.status_code}")
+            print(f"✗ Backend returned unexpected status {response.status_code}")
             return False
     except requests.exceptions.ConnectionError:
         print("✗ Backend is not running!")

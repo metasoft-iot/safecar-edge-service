@@ -170,12 +170,17 @@ class SensorReadingService:
     @staticmethod
     def determine_alert_severity(reading: SensorReading) -> str:
         """Determine the alert severity level based on sensor readings.
+        
+        Returns ONLY values that exist in backend AlertSeverity enum:
+        - INFO
+        - WARN (not WARNING!)
+        - CRITICAL
 
         Args:
             reading: Sensor reading to evaluate.
 
         Returns:
-            str: Alert severity level (INFO, WARNING, CRITICAL).
+            str: Alert severity level (INFO, WARN, CRITICAL).
         """
         severity = "INFO"
 
@@ -185,7 +190,7 @@ class SensorReadingService:
             if temp >= SensorReadingService.CABIN_TEMP_CRITICAL_HIGH or temp <= SensorReadingService.TEMP_WARNING_LOW:
                 severity = "CRITICAL"
             elif temp >= SensorReadingService.CABIN_TEMP_WARNING_HIGH:
-                severity = "WARNING"
+                severity = "WARN"
 
         # Check engine temperature
         if reading.has_engine_temperature_reading():
@@ -193,16 +198,16 @@ class SensorReadingService:
             if temp >= SensorReadingService.ENGINE_TEMP_CRITICAL_HIGH:
                 severity = "CRITICAL"
             elif temp >= SensorReadingService.ENGINE_TEMP_WARNING_HIGH and severity != "CRITICAL":
-                severity = "WARNING"
+                severity = "WARN"
 
         # Check humidity (cabin or engine)
         for humidity in [reading.cabin_humidity_percent, reading.engine_humidity_percent]:
             if humidity is not None:
                 if humidity >= SensorReadingService.HUMIDITY_CRITICAL_HIGH:
                     if severity != "CRITICAL":
-                        severity = "WARNING"
+                        severity = "WARN"
                 elif humidity <= SensorReadingService.HUMIDITY_WARNING_LOW and severity == "INFO":
-                    severity = "WARNING"
+                    severity = "WARN"
 
         # Check gas concentration
         if reading.has_gas_reading():
@@ -210,22 +215,32 @@ class SensorReadingService:
             if gas_ppm >= SensorReadingService.GAS_CRITICAL_PPM:
                 severity = "CRITICAL"
             elif gas_ppm >= SensorReadingService.GAS_WARNING_PPM and severity != "CRITICAL":
-                severity = "WARNING"
+                severity = "WARN"
 
         # Check current
         if reading.has_current_reading():
             current = reading.current_amperes
             if current >= SensorReadingService.CURRENT_CRITICAL_HIGH or current <= SensorReadingService.CURRENT_WARNING_LOW:
                 if severity != "CRITICAL":
-                    severity = "WARNING"
+                    severity = "WARN"
             elif current >= SensorReadingService.CURRENT_WARNING_HIGH and severity == "INFO":
-                severity = "WARNING"
+                severity = "WARN"
 
         return severity
 
     @staticmethod
     def determine_telemetry_type(reading: SensorReading) -> str:
         """Determine the primary telemetry type based on readings.
+        
+        Returns ONLY values that exist in backend TelemetryType enum:
+        - SPEED
+        - LOCATION
+        - DTC
+        - ALERT
+        - TIRE_PRESSURE
+        - CABIN_GAS
+        - ACCELERATION
+        - SENSOR_DATA
 
         Args:
             reading: Sensor reading to evaluate.
@@ -233,25 +248,24 @@ class SensorReadingService:
         Returns:
             str: Telemetry type compatible with backend TelemetryType enum.
         """
-        # Prioritize critical conditions
-        severity = SensorReadingService.determine_alert_severity(reading)
-
-        if severity == "CRITICAL":
-            if reading.has_gas_reading():
-                return "CABIN_GAS_DETECTED"
-            if reading.has_engine_temperature_reading():
-                return "ENGINE_OVERHEAT"
-            if reading.has_current_reading():
-                return "ELECTRICAL_FAULT"
-
-        # Default types based on available sensors
+        # Prioritize based on what sensors are present
+        
+        # Gas sensor (MQ2 from CABINA) → CABIN_GAS
         if reading.has_gas_reading():
-            return "CABIN_GAS_DETECTED"
+            return "CABIN_GAS"
+        
+        # GPS sensor (NEO6M from CABINA) → LOCATION
         if reading.has_gps_reading():
-            return "LOCATION_UPDATE"
-        if reading.has_engine_temperature_reading() or reading.has_cabin_temperature_reading():
-            return "TEMPERATURE_ANOMALY"
-        if reading.has_current_reading():
-            return "ELECTRICAL_FAULT"
+            return "LOCATION"
+        
+        # Any other sensor data (DHT11, ACS712) → SENSOR_DATA
+        if (reading.has_engine_temperature_reading() or 
+            reading.has_cabin_temperature_reading() or
+            reading.has_current_reading() or
+            reading.has_cabin_humidity_reading() or
+            reading.has_engine_humidity_reading()):
+            return "SENSOR_DATA"
+        
+        # Default fallback
+        return "SENSOR_DATA"
 
-        return "GENERAL"

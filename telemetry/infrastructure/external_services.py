@@ -127,18 +127,24 @@ class SafeCarBackendService:
 
         # Add gas detection (MQ2 from CABINA) - flat fields
         if reading.has_gas_reading():
-            # Map gas type to backend enum (uppercase)
+            # Map MQ2 gas types to backend CabinGasType enum
+            # Backend accepts: CO2, CO, FUEL_VAPOR, SMOKE, UNKNOWN
+            # MQ2 detects combustible gases (methane, propane, butane, etc.)
+            # Map all MQ2 detections to FUEL_VAPOR (most appropriate for combustible gases)
             gas_type_mapping = {
-                'methane': 'METHANE',
-                'propane': 'PROPANE',
-                'butane': 'BUTANE',
-                'alcohol': 'ALCOHOL',
-                'hydrogen': 'HYDROGEN',
-                'lpg': 'LPG'
+                'methane': 'FUEL_VAPOR',
+                'propane': 'FUEL_VAPOR',
+                'butane': 'FUEL_VAPOR',
+                'lpg': 'FUEL_VAPOR',
+                'alcohol': 'FUEL_VAPOR',
+                'hydrogen': 'FUEL_VAPOR',
+                'smoke': 'SMOKE',
+                'co': 'CO',
+                'co2': 'CO2'
             }
             backend_gas_type = gas_type_mapping.get(
                 reading.gas_type.lower(),
-                'OTHER'
+                'UNKNOWN'  # Default fallback
             )
 
             payload["cabinGasType"] = backend_gas_type
