@@ -14,7 +14,7 @@ class SafeCarBackendService:
     def __init__(self):
         """Initialize the SafeCar backend service with configuration."""
         # Backend URL (local por ahora, sin .env)
-        self.backend_url = 'http://localhost:8080'
+        self.backend_url = 'https://safecar.joyeria-sharvel.com'
         self.telemetry_endpoint = f"{self.backend_url}/api/v1/telemetry"
         self.timeout = 10  # seconds
 
