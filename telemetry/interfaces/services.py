@@ -10,7 +10,7 @@ def create_sensor_reading():
     """Create a new sensor reading from IoT device (ESP32 CABINA or MOTOR).
 
     Headers:
-        X-Device-Id: Device identifier
+        X-Device-Id: Device identifier (use ESP32 MAC)
         X-API-Key: Device API key
 
     Request body (all fields optional except timestamp):
@@ -42,19 +42,24 @@ def create_sensor_reading():
         400: Invalid request data
         401: Unauthorized
     """
-    # Get authentication headers
-    device_id = request.headers.get('X-Device-Id')
-    api_key = request.headers.get('X-API-Key')
+    # Get request data
+    data = request.get_json(silent=True) or {}
+
+    # Accept MAC address as device identifier (headers preferred, fallback to body)
+    device_id = (
+        request.headers.get('X-Device-Id')
+        or request.headers.get('X-Device-Mac')
+        or request.headers.get('X-Device-MAC')
+        or data.get('device_id')
+        or data.get('device_mac')
+        or data.get('mac_address')
+    )
+    api_key = request.headers.get('X-API-Key') or data.get('api_key')
 
     if not device_id or not api_key:
         return jsonify({
-            'error': 'Missing authentication headers: X-Device-Id and X-API-Key required'
+            'error': 'Missing authentication: send X-Device-Id (MAC) and X-API-Key headers'
         }), 401
-
-    # Get request data
-    data = request.get_json()
-    if not data:
-        return jsonify({'error': 'Request body is required'}), 400
 
     try:
         telemetry_service = TelemetryApplicationService()

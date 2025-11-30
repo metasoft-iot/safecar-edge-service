@@ -12,6 +12,8 @@ ESP32 (MOTOR) - Located in engine compartment:
 - DHT11: Temperature and humidity monitoring
 - ACS712-05: Current sensor (Hall effect, 0-5 Amperes)
 """
+import os
+from dotenv import load_dotenv
 from flask import Flask
 
 import iam.application.services
@@ -19,6 +21,8 @@ from telemetry.interfaces.services import telemetry_api
 from iam.interfaces.services import iam_api
 from shared.infrastructure.database import init_db
 
+# Load environment variables from .env if present
+load_dotenv()
 app = Flask(__name__)
 app.register_blueprint(iam_api)
 app.register_blueprint(telemetry_api)
@@ -38,8 +42,10 @@ def setup():
     if first_request:
         first_request = False
         init_db()
-        auth_application_service = iam.application.services.AuthApplicationService()
-        auth_application_service.get_or_create_test_device()
+        create_test_device = os.getenv("EDGE_CREATE_TEST_DEVICE", "").lower() == "true"
+        if create_test_device:
+            auth_application_service = iam.application.services.AuthApplicationService()
+            auth_application_service.get_or_create_test_device()
 
 
 @app.route('/')

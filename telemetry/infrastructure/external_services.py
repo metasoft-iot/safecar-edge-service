@@ -37,8 +37,8 @@ class SafeCarBackendService:
 
         Args:
             reading: Sensor reading to send.
-            telemetry_type: Type of telemetry (e.g., CABIN_GAS_DETECTED).
-            severity: Alert severity (INFO, WARNING, CRITICAL).
+            telemetry_type: Type of telemetry (e.g., CABIN_GAS).
+            severity: Alert severity (INFO, WARN, CRITICAL).
 
         Returns:
             bool: True if sent successfully, False otherwise.
@@ -79,12 +79,12 @@ class SafeCarBackendService:
     ) -> Dict[str, Any]:
         """Build the telemetry payload compatible with SafeCar backend.
 
-        Backend expects a FLAT structure (CreateTelemetryResource):
+        Backend expects a FLAT structure (CreateTelemetryResource) with the
+        device MAC address instead of vehicle/driver identifiers:
         {
-            "vehicleId": 1,
-            "driverId": 1,
-            "type": "CABIN_GAS_DETECTED",
-            "severity": "WARNING",
+            "macAddress": "AA:BB:CC:DD:EE:FF",
+            "type": "CABIN_GAS",
+            "severity": "WARN",
             "timestamp": "2025-11-27T20:00:00Z",
             "cabinTemperature": 25.5,
             "cabinHumidity": 65.0,
@@ -106,8 +106,7 @@ class SafeCarBackendService:
         """
         # Build FLAT payload structure
         payload = {
-            "vehicleId": reading.vehicle_id,
-            "driverId": reading.driver_id,
+            "macAddress": reading.device_id,
             "type": telemetry_type,
             "severity": severity,
             "timestamp": reading.timestamp.isoformat()

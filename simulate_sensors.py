@@ -14,6 +14,7 @@ ESP32 (MOTOR):
 Usage:
     python simulate_sensors.py
 """
+import os
 import time
 import random
 import requests
@@ -30,8 +31,8 @@ class SensorSimulator:
             edge_service_url: URL of the edge service.
         """
         self.edge_service_url = edge_service_url
-        self.device_id = 'safecar-001'
-        self.api_key = 'test-api-key-12345'
+        self.device_id = os.getenv('DEVICE_ID', 'safecar-001')
+        self.api_key = os.getenv('API_KEY', 'test-api-key-12345')
 
         # Simulated location (Lima, Peru)
         self.base_latitude = -12.0464

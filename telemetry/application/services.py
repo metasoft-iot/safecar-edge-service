@@ -108,8 +108,6 @@ class TelemetryApplicationService:
         return {
             'id': saved_reading.id,
             'device_id': saved_reading.device_id,
-            'vehicle_id': saved_reading.vehicle_id,
-            'driver_id': saved_reading.driver_id,
             'sensor_location': saved_reading.sensor_location,
             'timestamp': saved_reading.timestamp.isoformat() + 'Z',
             'severity': severity,
@@ -234,8 +232,6 @@ class TelemetryApplicationService:
         return {
             'id': reading.id,
             'device_id': reading.device_id,
-            'vehicle_id': reading.vehicle_id,
-            'driver_id': reading.driver_id,
             'sensor_location': reading.sensor_location,
             'cabin_temperature_celsius': reading.cabin_temperature_celsius,
             'cabin_humidity_percent': reading.cabin_humidity_percent,

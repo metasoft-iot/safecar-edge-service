@@ -9,14 +9,15 @@ Make sure both services are running:
 """
 import requests
 import json
+import os
 from datetime import datetime, timezone
 
 # Edge Service endpoint
-EDGE_SERVICE_URL = "http://localhost:5000/api/v1/telemetry/data-records"
+EDGE_SERVICE_URL = os.getenv("EDGE_SERVICE_URL", "http://localhost:5000/api/v1/telemetry/data-records")
 
-# Device credentials (created automatically by Edge Service)
-DEVICE_ID = "safecar-001"
-API_KEY = "test-api-key-12345"
+# Device credentials (set via env for real devices; test defaults remain for local)
+DEVICE_ID = os.getenv("DEVICE_ID", "safecar-001")
+API_KEY = os.getenv("API_KEY", "test-api-key-12345")
 
 def test_cabina_data():
     """Test sending CABINA sensor data (DHT11, MQ2, GPS)."""

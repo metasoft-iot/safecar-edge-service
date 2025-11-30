@@ -1,4 +1,5 @@
 """Application services for IAM context"""
+import os
 from typing import Optional
 from iam.domain.entities import Device
 from iam.domain.services import DeviceService
@@ -84,6 +85,17 @@ class AuthApplicationService:
         Returns:
             Optional[Device]: Device if found and valid, None otherwise
         """
+        # Shared API key mode (e.g., one key for all ESP32 MACs)
+        shared_api_key = os.getenv("EDGE_SHARED_API_KEY")
+        if shared_api_key and api_key == shared_api_key and device_id:
+            existing = self.device_repository.find_by_id(device_id)
+            if existing:
+                return existing
+
+            # Auto-register device with shared key
+            new_device = self.device_service.create_device(device_id, shared_api_key)
+            return self.device_repository.save(new_device)
+
         return self.device_repository.find_by_id_and_api_key(device_id, api_key)
     
     def get_or_create_test_device(self) -> Device:

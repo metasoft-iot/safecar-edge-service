@@ -88,10 +88,13 @@ pip install -r requirements.txt
 El servicio está configurado para funcionar localmente sin necesidad de archivos `.env`:
 
 - **Backend URL**: `http://localhost:8080` (hardcoded)
-- **Vehicle ID**: `1` (hardcoded)
-- **Driver ID**: `1` (hardcoded)
-- **Device ID**: `safecar-001` (creado automáticamente)
-- **API Key**: `test-api-key-12345` (creado automáticamente)
+- **Vehicle ID**: `1` (hardcoded, solo para persistencia local)
+- **Driver ID**: `1` (hardcoded, solo para persistencia local)
+- **Device ID**: se usa el `X-Device-Id` que envíes (MAC real del ESP32). Solo se crea el dispositivo de prueba si `EDGE_CREATE_TEST_DEVICE=true`.
+- **API Key**: puedes usar una API key por dispositivo o una API key compartida para todos tus ESP32:
+  - Per-device: registra cada MAC con su `api_key` vía `/api/v1/auth/devices`.
+  - Compartida: exporta `EDGE_SHARED_API_KEY=<clave>` y envía esa misma clave con cualquier MAC. El edge auto-registra el dispositivo si no existe.
+- **Payload Backend**: se envía solo `macAddress` (device_id) + datos de sensores; no se envían vehicle_id ni driver_id
 
 > **Nota**: Para producción, estos valores se pueden extraer a variables de entorno, pero para desarrollo local no es necesario.
 
@@ -256,36 +259,28 @@ def setup():
    ↓
 [Edge Domain] Determina severidad:
    - INFO: Valores normales
-   - WARNING: Valores en rango de alerta
+   - WARN: Valores en rango de alerta
    - CRITICAL: Valores peligrosos
    ↓
 [Edge Domain] Determina tipo de telemetría:
-   - CABIN_GAS_DETECTED
-   - ENGINE_OVERHEAT
-   - TEMPERATURE_ANOMALY
-   - LOCATION_UPDATE
-   - ELECTRICAL_FAULT
+   - CABIN_GAS
+   - LOCATION
+   - SENSOR_DATA
    ↓
 [Edge Repository] Guarda en SQLite local (backup)
    ↓
-[Edge External Service] Mapea a formato TelemetrySample:
+[Edge External Service] Mapea y envía payload plano (sin vehicle_id/driver_id):
    {
-     "sample": {
-       "type": "CABIN_GAS_DETECTED",
-       "severity": "WARNING",
-       "vehicleId": {"vehicleId": 1},
-       "driverId": {"driverId": 1},
-       "cabinTemperature": {"value": 25.5},
-       "cabinHumidity": {"value": 65.0},
-       "cabinGasLevel": {
-         "type": "METHANE",
-         "concentrationPpm": 150.0
-       },
-       "location": {
-         "latitude": -12.0464,
-         "longitude": -77.0428
-       }
-     }
+     "macAddress": "safecar-001",
+     "type": "CABIN_GAS",
+     "severity": "WARN",
+     "timestamp": "2025-11-27T20:00:00Z",
+     "cabinTemperature": 25.5,
+     "cabinHumidity": 65.0,
+     "cabinGasType": "FUEL_VAPOR",
+     "cabinGasConcentration": 150.0,
+     "latitude": -12.0464,
+     "longitude": -77.0428
    }
    ↓
 [Edge] Envía a Backend:

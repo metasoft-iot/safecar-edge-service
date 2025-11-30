@@ -8,14 +8,14 @@ class DeviceRepository:
     """
     Repository for managing device persistence.
     """
-    
+
     def save(self, device: DeviceEntity) -> DeviceEntity:
         """
         Save or update a device in the database.
-        
+
         Args:
             device (DeviceEntity): Device entity to save
-            
+
         Returns:
             DeviceEntity: Saved device entity
         """
@@ -26,21 +26,21 @@ class DeviceRepository:
                 'created_at': device.created_at
             }
         )
-        
+
         if not created:
             device_model.api_key = device.api_key
             device_model.created_at = device.created_at
             device_model.save()
-        
+
         return self._to_entity(device_model)
-    
+
     def find_by_id(self, device_id: str) -> Optional[DeviceEntity]:
         """
         Find a device by its ID.
-        
+
         Args:
             device_id (str): Device identifier
-            
+
         Returns:
             Optional[DeviceEntity]: Device entity if found, None otherwise
         """
@@ -49,7 +49,7 @@ class DeviceRepository:
             return self._to_entity(device_model)
         except DeviceModel.DoesNotExist:
             return None
-    
+
     @staticmethod
     def get_or_create_test_device() -> DeviceEntity:
         """Get or create a test device for development/testing purposes.
@@ -59,7 +59,7 @@ class DeviceRepository:
         """
         from datetime import datetime, timezone
         device_model, _ = DeviceModel.get_or_create(
-            device_id="safecar-001",
+            device_id="1",
             defaults={
                 "api_key": "test-api-key-12345",
                 "created_at": datetime.now(timezone.utc)
@@ -70,35 +70,35 @@ class DeviceRepository:
             api_key=device_model.api_key,
             created_at=device_model.created_at
         )
-    
+
     def find_by_id_and_api_key(self, device_id: str, api_key: str) -> Optional[DeviceEntity]:
         """
         Find a device by ID and API key (authentication).
-        
+
         Args:
             device_id (str): Device identifier
             api_key (str): API key for authentication
-            
+
         Returns:
             Optional[DeviceEntity]: Device entity if found and authenticated, None otherwise
         """
         try:
             device_model = DeviceModel.get(
-                (DeviceModel.device_id == device_id) & 
+                (DeviceModel.device_id == device_id) &
                 (DeviceModel.api_key == api_key)
             )
             return self._to_entity(device_model)
         except DeviceModel.DoesNotExist:
             return None
-    
+
     @staticmethod
     def _to_entity(model: DeviceModel) -> DeviceEntity:
         """
         Convert a Peewee model to a domain entity.
-        
+
         Args:
             model (DeviceModel): Peewee model instance
-            
+
         Returns:
             DeviceEntity: Domain entity
         """
