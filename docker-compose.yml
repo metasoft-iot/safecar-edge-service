@@ -15,6 +15,12 @@ services:
       # Persist local SQLite data outside the container
       - edge_data:/app/safecar_edge.db
     restart: unless-stopped
+    networks:
+      - laravel_net
 
 volumes:
   edge_data:
+
+networks:
+  laravel_net:
+    external: true
