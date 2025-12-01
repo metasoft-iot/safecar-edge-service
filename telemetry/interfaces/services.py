@@ -61,22 +61,35 @@ def create_sensor_reading():
             'error': 'Missing authentication: send X-Device-Id (MAC) and X-API-Key headers'
         }), 401
 
+    # Map alternate field names (clients may send camelCase)
+    sensor_location = data.get('sensor_location') or data.get('type')
+    cabin_temp = data.get('cabin_temperature_celsius') or data.get('cabinTemperature')
+    cabin_hum = data.get('cabin_humidity_percent') or data.get('cabinHumidity')
+    engine_temp = data.get('engine_temperature_celsius') or data.get('engineTemperature')
+    engine_hum = data.get('engine_humidity_percent') or data.get('engineHumidity')
+    gas_type = data.get('gas_type') or data.get('cabinGasType')
+    gas_ppm = data.get('gas_concentration_ppm') or data.get('cabinGasConcentration')
+    latitude = data.get('latitude')
+    longitude = data.get('longitude')
+    current = data.get('current_amperes') or data.get('electricalCurrent')
+    timestamp = data.get('timestamp')
+
     try:
         telemetry_service = TelemetryApplicationService()
         result = telemetry_service.record_sensor_reading(
             device_id=device_id,
             api_key=api_key,
-            sensor_location=data.get('sensor_location'),
-            cabin_temperature_celsius=data.get('cabin_temperature_celsius'),
-            cabin_humidity_percent=data.get('cabin_humidity_percent'),
-            engine_temperature_celsius=data.get('engine_temperature_celsius'),
-            engine_humidity_percent=data.get('engine_humidity_percent'),
-            gas_type=data.get('gas_type'),
-            gas_concentration_ppm=data.get('gas_concentration_ppm'),
-            latitude=data.get('latitude'),
-            longitude=data.get('longitude'),
-            current_amperes=data.get('current_amperes'),
-            timestamp=data.get('timestamp')
+            sensor_location=sensor_location,
+            cabin_temperature_celsius=cabin_temp,
+            cabin_humidity_percent=cabin_hum,
+            engine_temperature_celsius=engine_temp,
+            engine_humidity_percent=engine_hum,
+            gas_type=gas_type,
+            gas_concentration_ppm=gas_ppm,
+            latitude=latitude,
+            longitude=longitude,
+            current_amperes=current,
+            timestamp=timestamp
         )
 
         return jsonify({

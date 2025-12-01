@@ -85,9 +85,9 @@ pip install -r requirements.txt
 
 ## Configuración
 
-El servicio está configurado para funcionar localmente sin necesidad de archivos `.env`:
+El servicio puede configurarse vía `.env` (se carga automáticamente con `python-dotenv`):
 
-- **Backend URL**: `http://localhost:8080` (hardcoded)
+- **Backend URL**: `BACKEND_URL` (default: `https://safecar.joyeria-sharvel.com`; usa `http://localhost:8080` para desarrollo local)
 - **Vehicle ID**: `1` (hardcoded, solo para persistencia local)
 - **Driver ID**: `1` (hardcoded, solo para persistencia local)
 - **Device ID**: se usa el `X-Device-Id` que envíes (MAC real del ESP32). Solo se crea el dispositivo de prueba si `EDGE_CREATE_TEST_DEVICE=true`.
@@ -97,6 +97,20 @@ El servicio está configurado para funcionar localmente sin necesidad de archivo
 - **Payload Backend**: se envía solo `macAddress` (device_id) + datos de sensores; no se envían vehicle_id ni driver_id
 
 > **Nota**: Para producción, estos valores se pueden extraer a variables de entorno, pero para desarrollo local no es necesario.
+
+## Despliegue con Docker
+
+1. Crea/ajusta `.env` en la raíz (se monta en el contenedor):
+   ```
+   BACKEND_URL=https://safecar.joyeria-sharvel.com
+   EDGE_SHARED_API_KEY=share_api_key
+   EDGE_CREATE_TEST_DEVICE=false
+   ```
+2. Construye y levanta:
+   ```bash
+   docker-compose up --build -d
+   ```
+3. El servicio queda en `http://localhost:5000`. El archivo SQLite se persiste en el volumen `edge_data`.
 
 ## Uso
 

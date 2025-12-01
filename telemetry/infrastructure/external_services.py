@@ -1,4 +1,5 @@
 """External service integrations for Telemetry context."""
+import os
 import requests
 from typing import Optional, Dict, Any
 from telemetry.domain.entities import SensorReading
@@ -13,8 +14,8 @@ class SafeCarBackendService:
 
     def __init__(self):
         """Initialize the SafeCar backend service with configuration."""
-        # Backend URL (local por ahora, sin .env)
-        self.backend_url = 'https://safecar.joyeria-sharvel.com'
+        # Backend URL (configurable via env BACKEND_URL)
+        self.backend_url = os.getenv('BACKEND_URL', 'https://safecar.joyeria-sharvel.com')
         self.telemetry_endpoint = f"{self.backend_url}/api/v1/telemetry"
         self.timeout = 10  # seconds
 
