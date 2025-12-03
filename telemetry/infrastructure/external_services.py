@@ -16,7 +16,7 @@ class SafeCarBackendService:
         """Initialize the SafeCar backend service with configuration."""
         # Backend URL (configurable via env BACKEND_URL)
         self.backend_url = os.getenv('BACKEND_URL', 'https://safecar.joyeria-sharvel.com')
-        self.telemetry_endpoint = f"{self.backend_url}/api/v1/telemetry"
+        self.telemetry_endpoint = f"{self.backend_url}/api/v1/telemetry-records"
         self.timeout = 10  # seconds
 
     def send_telemetry_sample(
